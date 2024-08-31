@@ -137,7 +137,7 @@ on update cascade,
 foreign key (dept_id) references department(dept_id)
 );
 
-create table dept_maneger (
+create table dept_manager (
 dept_id char(4) not null,
 emp_id int not null,
 start_date date, 
@@ -378,7 +378,7 @@ INSERT INTO education (emp_id, education_level,institution, major) VALUES
 (16,'Cử nhân','ĐH RMIT', 'Quản trị Kinh doanh'),
 (17,'Cử nhân','ĐH Tôn Đức Thắng', 'Thương mại điện tử'),
 (18, 'Cử nhân', 'Đại học Kinh tế Quốc Dân', 'Quan hệ công chúng'),
-(19, 'Thạc sỹ', 'Đại học Kinh tế Quốc Dân', 'Quan hệ công chúng'),
+(19, 'Thạc sĩ', 'Đại học Kinh tế Quốc Dân', 'Quan hệ công chúng'),
 (20, 'Cử nhân', 'Đại học Kinh tế Quốc Dân', 'Quản trị nhân lực'),
 (21, 'Cử nhân', 'Đại học Ngoại Thương', 'Kinh tế quốc tế'),
 (22, 'Thạc sĩ', 'Học viện Ngân hàng', 'Quản trị kinh doanh'),
@@ -687,7 +687,7 @@ VALUES ('CR03', 4, '3 tuần'),
 ('CR09', 45, '6 tháng')
 ;
 
-INSERT INTO dept_maneger (dept_id, emp_id, start_date, end_date)
+INSERT INTO dept_manager (dept_id, emp_id, start_date, end_date)
 VALUES
 ('MG01', 1, '2023-03-01', NULL),
 ('HR02',4,'2024-05-01',NULL),
@@ -699,6 +699,279 @@ VALUES
 ('RD06', '38', '2023-09-01', NULL)
 ;
 
-create index employeeindex on employee(emp_name);
+#INDEX
+create index employeeindex on employee(emp_name,email);
+create index titleindex on titles(title);
+
+#nhân viên có hạn hợp đồng trước ngày 01/01/2025
 select * from employee
-where emp_id in (select emp_id from contract_of_emp where end_date <'2025-01-01' );
+where emp_id
+in (select emp_id from contract_of_emp where end_date <'2025-01-01' and end_date in (select max(end_date) from contract_of_emp group by emp_id ));
+
+#Nhân viên đã làm việc được hơn 1 năm
+select * from employee
+where datediff(now(), join_date) > 365;
+
+# nhân viên trong phòng Quản lý có thời gian vào công ty trong tháng 3,5 năm 2023
+select * from employee
+where emp_id in
+(select emp_id from dept_emp
+where dept_id ='MG01')
+and join_date between '2023-03-01' and '2023-05-31';
+
+#nhân viên sinh nhật trong tháng này
+select * from employee
+where month(dob) = month(now());
+
+#thực tập sih và thời gian thực tập
+SELECT 
+    contract_of_emp.contract_id, 
+    employee.emp_id, 
+    employee.emp_name, 
+    contract_of_emp.start_date, 
+    contract_of_emp.end_date,
+    TIMESTAMPDIFF(MONTH, contract_of_emp.start_date, contract_of_emp.end_date) AS so_thang
+FROM 
+    contract_of_emp 
+INNER JOIN 
+    employee 
+ON 
+    contract_of_emp.emp_id = employee.emp_id
+WHERE 
+    contract_of_emp.contract_id = 'CT3';
+
+#tất cả các chức vụ từ khi vào công ty của Phan văn Tiến
+SELECT employee.emp_id, emp_name, title, start_date, end_date
+FROM titles
+INNER JOIN employee ON employee.emp_id = titles.emp_id
+WHERE emp_name = "Phan Van Tien";
+
+#số lượng nhân viên mỗi phòng ban và tỉ lệ phần trăm trong công ty
+SELECT d.dept_id, d.dept_name,
+       COUNT(e.emp_id) AS number_of_employees,
+       ROUND((COUNT(e.emp_id) / total_employees.total) * 100, 2) AS percentage
+FROM department d
+LEFT JOIN dept_emp de ON d.dept_id = de.dept_id
+LEFT JOIN employee e ON de.emp_id = e.emp_id
+CROSS JOIN (SELECT COUNT(*) AS total FROM employee) AS total_employees
+GROUP BY d.dept_id, d.dept_name, total_employees.total;
+
+#số lượng nhân viên từng trình độ học vấn và tỉ lệ phần trăm trong công ty
+SELECT edu.education_level, COUNT(e.emp_id) AS number_of_employees, 
+    ROUND((COUNT(e.emp_id) / total_employees.total) * 100, 2) AS percentage
+FROM education edu
+JOIN employee e ON edu.emp_id = e.emp_id
+CROSS JOIN (SELECT COUNT(*) AS total FROM employee) AS total_employees
+GROUP BY edu.education_level, total_employees.total;
+
+#danh sách nhân viên có trình độ học vấn thạc sĩ
+select employee.emp_id, employee.emp_name, education.education_level
+from employee inner join education on employee.emp_id = education.emp_id
+where education.education_level = 'Thạc sĩ';
+
+#top 10 người có lương cơ bản cao nhất công ty
+select salary.emp_id, emp_name, basic_salary
+from salary inner join employee on employee.emp_id = salary.emp_id
+where end_date is null
+order by basic_salary desc
+limit 10;
+#thông tin cá nhân của manager của mỗi phòng ban
+select employee.*, department.dept_name
+from employee inner join dept_manager inner join department
+on employee.emp_id = dept_manager.emp_id and dept_manager.dept_id = department.dept_id
+where employee.emp_id in (select emp_id from dept_manager);
+
+#lương trung bình của nhân viên mỗi phòng ban
+SELECT d.dept_id, d.dept_name, 
+       AVG(s.basic_salary) AS average_salary
+FROM department d
+LEFT JOIN dept_emp de ON d.dept_id = de.dept_id
+LEFT JOIN salary s ON de.emp_id = s.emp_id
+GROUP BY d.dept_id, d.dept_name
+ORDER BY average_salary;
+
+#danh sách 10 nhân viên nghỉ phép nhiều nhất
+SELECT a.emp_id, b.emp_name, SUM(DATEDIFF(a.end_dayoff_date, a.start_dayoff_date) + 1) AS total_days_off
+FROM day_off AS a
+JOIN employee AS b ON b.emp_id = a.emp_id
+GROUP BY emp_id
+ORDER BY total_days_off DESC
+LIMIT 10;
+
+#danh sách nhân viên nghỉ phép trong tháng 5
+SELECT a.emp_id, a.emp_name, b.category, b.start_dayoff_date, b.end_dayoff_date
+FROM day_off AS b
+JOIN employee AS a ON b.emp_id = a.emp_id
+WHERE (start_dayoff_date BETWEEN '2024-05-01' AND '2024-05-31')
+OR (end_dayoff_date BETWEEN '2024-05-01' AND '2024-05-31')
+OR (start_dayoff_date < '2024-05-01' AND end_dayoff_date > '2024-05-31');
+
+#số lượng nhân viên tham gia vào từng khóa đào tạo
+select course_name as Ten_khoa_hoc, count(emp_id) as So_nhan_vien
+from train_emp inner join training on train_emp.course_id = training.course_id
+group by train_emp.course_id;
+
+#Tạo view: gồm id, tên, ngày sinh, địa chỉ, chức vụ hiện tại, phòng ban hiện tại, mức lương hiện tại.
+create view employeeview as
+select e.emp_id, e.emp_name, e.dob, e.emp_address, t.title, d.dept_name, s.basic_salary
+from employee e
+join titles t on t.emp_id = e.emp_id
+join dept_emp de on de.emp_id = e.emp_id
+join department d on d.dept_id = de.dept_id
+join salary s on s.emp_id = e.emp_id
+where t.end_date is null and de.end_date is null and s.end_date is null
+order by e.emp_id;
+
+#Tạo Trigger khi xóa nhân viên
+CREATE TABLE deleted_employee (
+    emp_id INT NOT NULL,
+    emp_name VARCHAR(30) NOT NULL,
+    gender VARCHAR(3),
+    dob DATETIME,
+    emp_address VARCHAR(100),
+    emp_phone VARCHAR(12),
+    email VARCHAR(30),
+    join_date DATE,
+    deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (emp_id)
+);
+DELIMITER $$
+CREATE TRIGGER before_delete_employee
+BEFORE DELETE ON employee
+FOR EACH ROW
+BEGIN
+  INSERT INTO deleted_employee (emp_id, emp_name, gender, dob, emp_address, emp_phone, email, join_date)
+  VALUES (OLD.emp_id, OLD.emp_name, OLD.gender, OLD.dob, OLD.emp_address, OLD.emp_phone, OLD.email, OLD.join_date);
+END $$
+DELIMITER ;
+
+#Tạo Trigger cập nhật khi thay đổi thông tin cá nhân nhân viên (trường nào không thay đổi mặc định là NULL)
+CREATE TABLE change_emp_info (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+  employee_id INT NOT NULL,                
+  old_phone VARCHAR(12) DEFAULT NULL,      
+  old_email VARCHAR(30) DEFAULT NULL,     
+  change_date DATETIME DEFAULT NOW(),
+  action VARCHAR(20) DEFAULT 'update'     
+);
+DELIMITER $$
+CREATE TRIGGER before_emp_info_update
+BEFORE UPDATE ON employee
+FOR EACH ROW
+BEGIN
+  IF old.emp_phone <> new.emp_phone AND old.email <> new.email THEN
+    INSERT INTO change_emp_info(employee_id, old_phone, old_email)
+    VALUES (old.emp_id, old.emp_phone, old.email);
+  ELSEIF old.emp_phone <> new.emp_phone THEN
+    INSERT INTO change_emp_info(employee_id, old_phone)
+    VALUES (old.emp_id, old.emp_phone);
+  ELSEIF old.email <> new.email THEN
+    INSERT INTO change_emp_info(employee_id, old_email)
+    VALUES (old.emp_id, old.email);
+  END IF;
+END $$
+DELIMITER ;
+#Procedure: Thêm nhân viên
+DELIMITER $$
+CREATE PROCEDURE add_employee(
+  IN emp_name VARCHAR(30),
+  IN gender VARCHAR(3),
+  IN dob DATETIME,
+  IN emp_address VARCHAR(100),
+  IN emp_phone VARCHAR(12),
+  IN email VARCHAR(30),
+  IN join_date DATE
+)
+BEGIN
+  INSERT INTO employee (emp_name, gender, dob, emp_address, emp_phone, email, join_date)
+  VALUES (emp_name, gender, dob, emp_address, emp_phone, email, join_date);
+END $$
+DELIMITER ;
+
+#Procedure: Sửa thông tin nhân viên
+DELIMITER $$
+CREATE PROCEDURE update_employee(
+  IN emp_id_input INT,
+  IN new_emp_name VARCHAR(30),
+  IN new_gender VARCHAR(3),
+  IN new_dob DATETIME,
+  IN new_emp_address VARCHAR(100),
+  IN new_emp_phone VARCHAR(12),
+  IN new_email VARCHAR(30),
+  IN new_join_date DATE
+)
+BEGIN
+  UPDATE employee
+  SET
+    emp_name = new_emp_name,
+    gender = new_gender,
+    dob = new_dob,
+    emp_address = new_emp_address,
+    emp_phone = new_emp_phone,
+    email = new_email,
+    join_date = new_join_date
+  WHERE emp_id = emp_id_input;
+END $$
+DELIMITER ;
+
+#Procedure: Xóa thông tin nhân viên
+DELIMITER $$
+CREATE PROCEDURE delete_employee(
+  IN emp_id_input INT
+)
+BEGIN
+  DELETE FROM employee
+  WHERE emp_id = emp_id_input;
+END $$
+DELIMITER ;
+
+#Procedure: Lấy danh sách nhân viên trong 1 phòng ban cụ thể
+DELIMITER $$
+CREATE PROCEDURE get_employee_list_in_department(dept_id_input CHAR(4))
+BEGIN
+  SELECT e.emp_id, e.emp_name
+  FROM employee e
+  INNER JOIN dept_emp de ON e.emp_id = de.emp_id
+  WHERE de.dept_id = dept_id_input;
+END $$
+DELIMITER ;
+
+#Procedure: Lấy danh sách các khóa học tham gia của 1 nhân viên cụ thể
+DELIMITER $$
+CREATE PROCEDURE get_employee_trainings(IN emp_id_input INT)
+BEGIN
+  SELECT 
+    e.emp_name AS employee_name, 
+    t.course_name
+  FROM employee e
+  JOIN train_emp te ON e.emp_id = te.emp_id
+  JOIN training t ON te.course_id = t.course_id
+  WHERE e.emp_id = emp_id_input;
+END $$
+DELIMITER ;
+
+#Function: Tìm số ngày nghỉ trong năm
+DELIMITER $$
+CREATE FUNCTION calculate_days_off_in_year(emp_id_input INT, year_input INT)
+RETURNS INT
+DETERMINISTIC
+BEGIN
+  DECLARE total_days_off INT;
+  
+  SET total_days_off = (
+    SELECT SUM(
+      CASE
+        WHEN YEAR(start_dayoff_date) = year_input AND YEAR(end_dayoff_date) = year_input THEN DATEDIFF(end_dayoff_date, CONCAT(year_input, '-01-01')) + 1
+        WHEN YEAR(start_dayoff_date) < year_input AND YEAR(end_dayoff_date) > year_input THEN DATEDIFF(CONCAT(year_input, '-12-31'), CONCAT(year_input, '-01-01'))
+        WHEN YEAR(start_dayoff_date) = year_input AND YEAR(end_dayoff_date) > year_input THEN DATEDIFF(end_dayoff_date, start_dayoff_date) + 1
+        WHEN YEAR(start_dayoff_date) < year_input AND YEAR(end_dayoff_date) = year_input THEN DATEDIFF(CONCAT(year_input, '-12-31'), start_dayoff_date) + 1
+        ELSE 0
+      END
+    )
+    FROM day_off
+    WHERE emp_id = emp_id_input
+  );
+  
+  RETURN total_days_off;
+END $$
+DELIMITER ;
