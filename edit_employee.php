@@ -39,8 +39,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         $update_query = "UPDATE employee SET emp_name=?, gender=?, dob=?, emp_address=?, emp_phone=?, email=?, join_date=? WHERE emp_id=?";
         $stmt = $conn->prepare($update_query);
-        $stmt->bind_param("sssssssi", $emp_name, $gender, $dob, $emp_address, $emp_phone, $email, $join_date, $emp_id);
+        
+        if (!$stmt) {
+            die("Lỗi chuẩn bị câu lệnh: " . $conn->error);
+        }
 
+        $stmt->bind_param("sssssssi", $emp_name, $gender, $dob, $emp_address, $emp_phone, $email, $join_date, $emp_id);
+        
         if ($stmt->execute()) {
             echo "<script>
                     alert('Cập nhật thành công!');
@@ -48,10 +53,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                   </script>";
             exit();
         } else {
-            echo "<script>alert('Lỗi khi cập nhật!'); window.history.back();</script>";
+            echo "<script>alert('Lỗi khi cập nhật: " . $stmt->error . "'); window.history.back();</script>";
         }
     } elseif (isset($_POST['cancel'])) {
-        // Nếu nhấn "Hủy", quay lại trang danh sách
         echo "<script>window.location.href = 'view_tables.php?table=employee';</script>";
         exit();
     }
@@ -64,7 +68,57 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sửa Nhân Viên</title>
-    <link rel="stylesheet" href="assets/css/style.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 400px;
+        }
+        h2 {
+            text-align: center;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .button-group {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button[name="save"] {
+            background-color: #28a745;
+            color: white;
+        }
+        button.cancel-btn {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
 </head>
 <body>
     <div class="container">

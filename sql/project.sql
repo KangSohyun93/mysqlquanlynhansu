@@ -1,6 +1,5 @@
-create database project;
-
-use project;
+create database quanlynhansu;
+use quanlynhansu;
 create table employee(
 emp_id int not null auto_increment,
 emp_name varchar(30) not null,
@@ -148,6 +147,16 @@ foreign key (emp_id) references employee(emp_id)
 on delete cascade
 on update cascade
 );
+CREATE TABLE change_emp_info (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
+  emp_id INT NOT NULL,                
+  old_phone VARCHAR(12) DEFAULT NULL,      
+  old_email VARCHAR(30) DEFAULT NULL,     
+  change_date DATETIME DEFAULT NOW(),
+  action VARCHAR(20) DEFAULT 'update'     
+);
+
+
 
 INSERT INTO department (dept_id, dept_name, dept_address, dept_phone) VALUES
 ('MG01', 'Phòng Quản lý', 'P101', '0912000001'),
@@ -713,12 +722,11 @@ select * from employee
 where datediff(now(), join_date) > 365;
 
 # nhân viên trong phòng Quản lý có thời gian vào công ty trong tháng 3,5 năm 2023
-select * from employee
-where emp_id in
-(select emp_id from dept_emp
-where dept_id ='MG01')
-and join_date between '2023-03-01' and '2023-05-31';
-
+SELECT * FROM employee
+WHERE emp_id IN (
+    SELECT emp_id FROM dept_emp
+    WHERE dept_id = 'MG01'
+);
 #nhân viên sinh nhật trong tháng này
 select * from employee
 where month(dob) = month(now());
@@ -848,7 +856,7 @@ DELIMITER ;
 #Tạo Trigger cập nhật khi thay đổi thông tin cá nhân nhân viên (trường nào không thay đổi mặc định là NULL)
 CREATE TABLE change_emp_info (
   id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, 
-  employee_id INT NOT NULL,                
+  emp_id INT NOT NULL,                
   old_phone VARCHAR(12) DEFAULT NULL,      
   old_email VARCHAR(30) DEFAULT NULL,     
   change_date DATETIME DEFAULT NOW(),
@@ -860,13 +868,13 @@ BEFORE UPDATE ON employee
 FOR EACH ROW
 BEGIN
   IF old.emp_phone <> new.emp_phone AND old.email <> new.email THEN
-    INSERT INTO change_emp_info(employee_id, old_phone, old_email)
+    INSERT INTO change_emp_info(emp_id, old_phone, old_email)
     VALUES (old.emp_id, old.emp_phone, old.email);
   ELSEIF old.emp_phone <> new.emp_phone THEN
-    INSERT INTO change_emp_info(employee_id, old_phone)
+    INSERT INTO change_emp_info(emp_id, old_phone)
     VALUES (old.emp_id, old.emp_phone);
   ELSEIF old.email <> new.email THEN
-    INSERT INTO change_emp_info(employee_id, old_email)
+    INSERT INTO change_emp_info(emp_id, old_email)
     VALUES (old.emp_id, old.email);
   END IF;
 END $$
