@@ -9,14 +9,14 @@ $result = $conn->query($sql);
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách Phòng ban</title>
+    <title>Department List</title>
 </head>
 <body>
-    <h2>Danh sách Phòng ban</h2>
+    <h2>Department List</h2>
     <table border="1">
         <tr>
-            <th>Mã phòng</th>
-            <th>Tên phòng</th>
+            <th>ID</th>
+            <th>Department Name</th>
         </tr>
         <?php while ($row = $result->fetch_assoc()): ?>
         <tr>

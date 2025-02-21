@@ -12,16 +12,16 @@ $result = $conn->query($sql);
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách Hợp đồng</title>
+    <title>Contract List</title>
 </head>
 <body>
-    <h2>Danh sách Hợp đồng</h2>
+    <h2>Contract List</h2>
     <table border="1">
         <tr>
-            <th>ID Hợp đồng</th>
-            <th>Nhân viên</th>
-            <th>Ngày bắt đầu</th>
-            <th>Ngày kết thúc</th>
+            <th>Contract ID</th>
+            <th>Employee</th>
+            <th>Start Date</th>
+            <th>End Date</th>
         </tr>
         <?php while ($row = $result->fetch_assoc()): ?>
         <tr>

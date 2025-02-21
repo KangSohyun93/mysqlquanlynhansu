@@ -11,17 +11,17 @@ $result = $conn->query($sql);
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Danh sách Lương</title>
+    <title>Salary List</title>
 </head>
 <body>
-    <h2>Danh sách Lương Nhân viên</h2>
+    <h2>Employee's Salary List</h2>
     <table border="1">
         <tr>
-            <th>Mã NV</th>
-            <th>Họ tên</th>
-            <th>Lương</th>
-            <th>Ngày bắt đầu</th>
-            <th>Ngày kết thúc</th>
+            <th>Emp ID</th>
+            <th>Name</th>
+            <th>Salary</th>
+            <th>Join Date</th>
+            <th>End Date</th>
         </tr>
         <?php while ($row = $result->fetch_assoc()): ?>
         <tr>

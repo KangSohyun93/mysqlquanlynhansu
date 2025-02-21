@@ -60,7 +60,7 @@ if (isset($_GET['table'])) {
             if ($table == 'employee') {
                 echo "<td>
                         <a href='edit_employee.php?emp_id={$row['emp_id']}' class='btn btn-warning'>Edit</a>
-                        <a href='delete_employee.php?emp_id={$row['emp_id']}' class='btn btn-danger' onclick='return confirm(\"Are you sure you want to delete this employee?\")'>Delete</a>
+                        <a href='javascript:void(0);' class='btn btn-danger' onclick='deleteEmployee({$row['emp_id']})'>Delete</a>
                       </td>";
             }
             echo "</tr>";
@@ -121,6 +121,43 @@ if (isset($_GET['table'])) {
             background-color: #f2f2f2;
         }
     </style>
+    <!-- Thêm thư viện SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+<script>
+function deleteEmployee(empId) {
+    Swal.fire({
+        title: "Are you sure to delete?",
+        text: "Employee data will be completely deleted!",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#d33",
+        cancelButtonColor: "#3085d6",
+        confirmButtonText: "Delete",
+        cancelButtonText: "Cancel"
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch("delete_employee.php", {
+                method: "POST",
+                headers: { "Content-Type": "application/x-www-form-urlencoded" },
+                body: `emp_id=${empId}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    Swal.fire("Deleted!", data.message, "success").then(() => {
+                        location.reload(); // Tải lại trang sau khi xóa
+                    });
+                } else {
+                    Swal.fire("Error!", data.message, "error");
+                }
+            })
+            .catch(error => Swal.fire("Error!", "Error occurs!", "error"));
+        }
+    });
+}
+</script>
+
 </head>
 <body>
 </body>

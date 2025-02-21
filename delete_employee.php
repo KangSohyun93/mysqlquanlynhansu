@@ -1,10 +1,9 @@
 <?php
 include 'connect.php';
 
-if (isset($_GET['emp_id'])) {
-    $emp_id = $_GET['emp_id'];
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $emp_id = $_POST['emp_id'];
 
-    // Kiểm tra nhân viên có tồn tại không
     $check_query = "SELECT * FROM employee WHERE emp_id = ?";
     $stmt = $conn->prepare($check_query);
     $stmt->bind_param("i", $emp_id);
@@ -12,21 +11,19 @@ if (isset($_GET['emp_id'])) {
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
-        // Nếu tồn tại thì xóa
         $delete_query = "DELETE FROM employee WHERE emp_id = ?";
         $stmt = $conn->prepare($delete_query);
         $stmt->bind_param("i", $emp_id);
         if ($stmt->execute()) {
-            echo "<script>alert('Xóa thành công!'); window.location.href=document.referrer;</script>"; 
-            exit();
+            echo json_encode(["status" => "success", "message" => "Xóa thành công!"]);
         } else {
-            echo "<script>alert('Lỗi khi xóa! Kiểm tra ràng buộc dữ liệu.'); window.history.back();</script>";
+            echo json_encode(["status" => "error", "message" => "Lỗi khi xóa! Kiểm tra ràng buộc dữ liệu."]);
         }
     } else {
-        echo "<script>alert('Nhân viên không tồn tại!'); window.history.back();</script>";
+        echo json_encode(["status" => "error", "message" => "Nhân viên không tồn tại!"]);
     }
 } else {
-    echo "<script>alert('Thiếu thông tin nhân viên!'); window.history.back();</script>";
+    echo json_encode(["status" => "error", "message" => "Yêu cầu không hợp lệ!"]);
 }
 
 $conn->close();

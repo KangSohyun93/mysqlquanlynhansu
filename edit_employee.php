@@ -2,13 +2,12 @@
 include 'connect.php';
 
 if (!isset($_GET['emp_id']) || empty($_GET['emp_id'])) {
-    echo "<script>alert('Thiếu thông tin nhân viên!'); window.location.href='view_tables.php?table=employee';</script>";
+    echo "<script>alert('Employee information is lacking!'); window.location.href='view_tables.php?table=employee';</script>";
     exit();
 }
 
 $emp_id = $_GET['emp_id'];
 
-// Lấy thông tin nhân viên
 $query = "SELECT * FROM employee WHERE emp_id = ?";
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $emp_id);
@@ -17,11 +16,10 @@ $result = $stmt->get_result();
 $employee = $result->fetch_assoc();
 
 if (!$employee) {
-    echo "<script>alert('Nhân viên không tồn tại!'); window.location.href='view_tables.php?table=employee';</script>";
+    echo "<script>alert('Employee does not exist!'); window.location.href='view_tables.php?table=employee';</script>";
     exit();
 }
 
-// Xử lý cập nhật dữ liệu
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     if (isset($_POST['save'])) {
         $emp_name = trim($_POST['emp_name']);
@@ -33,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $join_date = $_POST['join_date'];
 
         if (empty($emp_name) || empty($gender) || empty($dob) || empty($emp_address) || empty($emp_phone) || empty($email) || empty($join_date)) {
-            echo "<script>alert('Vui lòng nhập đầy đủ thông tin!'); window.history.back();</script>";
+            echo "<script>alert('Please enter full information!'); window.history.back();</script>";
             exit();
         }
 
@@ -48,12 +46,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         if ($stmt->execute()) {
             echo "<script>
-                    alert('Cập nhật thành công!');
+                    alert('Success updated!');
                     window.location.href = 'view_tables.php?table=employee';
                   </script>";
             exit();
         } else {
-            echo "<script>alert('Lỗi khi cập nhật: " . $stmt->error . "'); window.history.back();</script>";
+            echo "<script>alert('Error when updating: " . $stmt->error . "'); window.history.back();</script>";
         }
     } elseif (isset($_POST['cancel'])) {
         echo "<script>window.location.href = 'view_tables.php?table=employee';</script>";
@@ -122,30 +120,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 </head>
 <body>
     <div class="container">
-        <h2>Sửa Thông Tin Nhân Viên</h2>
+        <h2>Edit Employee Information</h2>
         <form method="post">
-            <label>Họ và Tên:</label>
+            <label>Name:</label>
             <input type="text" name="emp_name" value="<?php echo htmlspecialchars($employee['emp_name']); ?>" required>
 
-            <label>Giới tính:</label>
+            <label>Gender:</label>
             <select name="gender">
                 <option value="nam" <?php if ($employee['gender'] == 'nam') echo "selected"; ?>>Nam</option>
                 <option value="nữ" <?php if ($employee['gender'] == 'nữ') echo "selected"; ?>>Nữ</option>
             </select>
 
-            <label>Ngày sinh:</label>
+            <label>Date of Birth:</label>
             <input type="date" name="dob" value="<?php echo date('Y-m-d', strtotime($employee['dob'])); ?>" required>
 
-            <label>Địa chỉ:</label>
+            <label>Address:</label>
             <input type="text" name="emp_address" value="<?php echo htmlspecialchars($employee['emp_address']); ?>" required>
 
-            <label>Số điện thoại:</label>
+            <label>Phone Number:</label>
             <input type="text" name="emp_phone" value="<?php echo htmlspecialchars($employee['emp_phone']); ?>" required>
 
             <label>Email:</label>
             <input type="email" name="email" value="<?php echo htmlspecialchars($employee['email']); ?>" required>
 
-            <label>Ngày vào làm:</label>
+            <label>Join Date:</label>
             <input type="date" name="join_date" value="<?php echo $employee['join_date']; ?>" required>
 
             <div class="button-group">

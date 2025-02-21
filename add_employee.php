@@ -10,13 +10,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $email = trim($_POST['email']);
     $join_date = $_POST['join_date'];
 
-    // Kiểm tra dữ liệu đầu vào không được để trống
     if (empty($emp_name) || empty($gender) || empty($dob) || empty($emp_address) || empty($emp_phone) || empty($email) || empty($join_date)) {
         echo "<script>alert('Vui lòng nhập đầy đủ thông tin!'); window.history.back();</script>";
         exit();
     }
 
-    // Sử dụng prepared statements để tránh lỗi SQL Injection
     $sql = "INSERT INTO employee (emp_name, gender, dob, emp_address, emp_phone, email, join_date) 
             VALUES (?, ?, ?, ?, ?, ?, ?)";
     $stmt = $conn->prepare($sql);
@@ -46,7 +44,7 @@ $conn->close();
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Thêm Nhân Viên</title>
+    <title>Add Employee</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -111,38 +109,38 @@ $conn->close();
 </head>
 <body>
     <div class="container">
-        <h2>Thêm Nhân Viên</h2>
+        <h2>Add Employee</h2>
         <form method="POST">
-            <label>Họ và Tên:</label>
+            <label>Name:</label>
             <input type="text" name="emp_name" required>
 
-            <label>Giới Tính:</label>
+            <label>Gender:</label>
             <select name="gender">
                 <option value="nam">Nam</option>
                 <option value="nữ">Nữ</option>
             </select>
 
-            <label>Ngày Sinh:</label>
+            <label>Date of Birth:</label>
             <input type="date" name="dob" required>
 
-            <label>Địa Chỉ:</label>
+            <label>Adress:</label>
             <input type="text" name="emp_address" required>
 
-            <label>Số Điện Thoại:</label>
+            <label>Phone Number:</label>
             <input type="text" name="emp_phone" required>
 
             <label>Email:</label>
             <input type="email" name="email" required>
 
-            <label>Ngày Vào Làm:</label>
+            <label>Join Date:</label>
             <input type="date" name="join_date" required>
 
             <div class="button-group">
-                <button type="submit" name="save">Thêm Nhân Viên</button>
+                <button type="submit" name="save">Add</button>
             </div>
         </form>
         <br>
-        <a href="view_tables.php?table=employee" class="cancel-btn">Quay lại danh sách</a>
+        <a href="view_tables.php?table=employee" class="cancel-btn">Back</a>
     </div>
 </body>
 </html>
